@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Stock Trading Journal</title>
+  <style>
+    :root{
+      /* Update these to match your calculator theme */
+      --bg:#0b1220;
+      --card:#121a2b;
+      --text:#e8eefc;
+      --muted:#9fb0d0;
+      --line:#22304d;
+      --accent:#ff8a00;
+      --danger:#ff4d4d;
+      --ok:#45d483;
+      --input:#0e1626;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      padding:24px;
+    }
+    .wrap{max-width:720px;margin:0 auto}
+    .card{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+    h1{margin:0 0 6px;font-size:22px}
+    .sub{margin:0 0 18px;color:var(--muted);font-size:13px}
+    .grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+    label{display:block;font-size:12px;color:var(--muted);margin:0 0 6px}
+    input, select{
+      width:100%;
+      padding:12px 12px;
+      background:var(--input);
+      color:var(--text);
+      border:1px solid var(--line);
+      border-radius:12px;
+      outline:none;
+    }
+    input::placeholder{color:rgba(159,176,208,.6)}
+    .row{grid-column:1 / -1}
+    .actions{
+      display:flex;
+      gap:10px;
+      margin-top:14px;
+      align-items:center;
+    }
+    button{
+      border:0;
+      border-radius:12px;
+      padding:12px 14px;
+      font-weight:600;
+      cursor:pointer;
+    }
+    .primary{background:var(--accent);color:#111}
+    .ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+    .status{
+      margin-left:auto;
+      font-size:12px;
+      color:var(--muted);
+    }
+    .status.ok{color:var(--ok)}
+    .status.bad{color:var(--danger)}
+    .hint{margin-top:10px;color:var(--muted);font-size:12px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Stock Trading Journal</h1>
+      <p class="sub">Each submit appends one new row to your spreadsheet.</p>
+
+      <form id="journalForm">
+        <div class="grid">
+
+          <div>
+            <label for="ticker">Ticker</label>
+            <input id="ticker" name="ticker" placeholder="SPY" autocomplete="off" required />
+          </div>
+
+          <div>
+            <label for="entryPrice">Entry Price</label>
+            <input id="entryPrice" name="entryPrice" placeholder="0.00" inputmode="decimal" required />
+          </div>
+
+          <div>
+            <label for="result">Win / Loss</label>
+            <select id="result" name="result" required>
+              <option value="" selected disabled>Select</option>
+              <option value="Win">Win</option>
+              <option value="Loss">Loss</option>
+              <option value="Breakeven">Breakeven</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="broker">Broker</label>
+            <input id="broker" name="broker" placeholder="Webull / TOS / IBKR" autocomplete="off" required />
+          </div>
+
+          <div class="row">
+            <label for="plAmount">Profit / Loss Amount</label>
+            <input id="plAmount" name="plAmount" placeholder="0.00 (use negative for loss)" inputmode="decimal" required />
+          </div>
+
+        </div>
+
+        <div class="actions">
+          <button class="primary" type="submit">Add Row</button>
+          <button class="ghost" type="button" id="resetBtn">Reset</button>
+          <div id="status" class="status"></div>
+        </div>
+
+        <div class="hint">
+          Tip: Use negative numbers for losses (example: -25.50).
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    // Paste your Apps Script Web App URL here:
+    const ENDPOINT = "https://script.google.com/macros/s/AKfycbxHATX4M-iyIUgk7-HSPTKmHezoHB_offUaawgVLw8Q9df01UMm_KloJhO005GmH0NSIw/exec";
+
+    const form = document.getElementById("journalForm");
+    const statusEl = document.getElementById("status");
+    const resetBtn = document.getElementById("resetBtn");
+
+    resetBtn.addEventListener("click", () => {
+      form.reset();
+      statusEl.textContent = "";
+      statusEl.className = "status";
+      document.getElementById("ticker").focus();
+    });
+
+    function parseNumberLike(str) {
+      if (str === null || str === undefined) return "";
+      const cleaned = String(str).replace(/[$, ]/g, "");
+      const n = Number(cleaned);
+      return Number.isFinite(n) ? n : "";
+    }
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      if (!ENDPOINT || ENDPOINT.includes("YOUR_APPS_SCRIPT_WEB_APP_URL")) {
+        statusEl.textContent = "Add your Apps Script URL in the code first.";
+        statusEl.className = "status bad";
+        return;
+      }
+
+      const payload = {
+        ticker: form.ticker.value,
+        entryPrice: parseNumberLike(form.entryPrice.value),
+        result: form.result.value,
+        broker: form.broker.value,
+        plAmount: parseNumberLike(form.plAmount.value)
+      };
+
+      statusEl.textContent = "Submitting...";
+      statusEl.className = "status";
+
+      try {
+        const res = await fetch(ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+
+        const json = await res.json();
+
+        if (json.ok) {
+          statusEl.textContent = "Row added.";
+          statusEl.className = "status ok";
+          form.reset();
+          document.getElementById("ticker").focus();
+        } else {
+          statusEl.textContent = "Error: " + (json.error || "Unknown error");
+          statusEl.className = "status bad";
+        }
+      } catch (err) {
+        statusEl.textContent = "Network error: " + String(err);
+        statusEl.className = "status bad";
+      }
+    });
+  </script>
+</body>
+</html>
