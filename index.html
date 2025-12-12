@@ -115,6 +115,15 @@
             <label for="plAmount">Profit / Loss Amount</label>
             <input id="plAmount" name="plAmount" placeholder="0.00 (use negative for loss)" inputmode="decimal" required />
           </div>
+<div class="row">
+  <label for="notes">Notes</label>
+  <input
+    id="notes"
+    name="notes"
+    placeholder="Optional trade notes"
+    autocomplete="off"
+  />
+</div>
 
         </div>
 
@@ -133,7 +142,7 @@
 
   <script>
     // Paste your Apps Script Web App URL here:
-    const ENDPOINT = "https://script.google.com/macros/s/AKfycbxHATX4M-iyIUgk7-HSPTKmHezoHB_offUaawgVLw8Q9df01UMm_KloJhO005GmH0NSIw/exec";
+    const ENDPOINT = "https://script.google.com/macros/s/AKfycbwDrEDoEJDhNZ8vFHVzuoBzfrgjpMmIXCaoKrVQ0--UK4g2lNlffW0Y5bFA0ho6uUoYfg/exec";
 
     const form = document.getElementById("journalForm");
     const statusEl = document.getElementById("status");
@@ -163,12 +172,13 @@
       }
 
       const payload = {
-        ticker: form.ticker.value,
-        entryPrice: parseNumberLike(form.entryPrice.value),
-        result: form.result.value,
-        broker: form.broker.value,
-        plAmount: parseNumberLike(form.plAmount.value)
-      };
+  ticker: form.ticker.value,
+  entryPrice: parseNumberLike(form.entryPrice.value),
+  result: form.result.value,
+  broker: form.broker.value,
+  plAmount: parseNumberLike(form.plAmount.value),
+  notes: form.notes.value
+};
 
       statusEl.textContent = "Submitting...";
       statusEl.className = "status";
