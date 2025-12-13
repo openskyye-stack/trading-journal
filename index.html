@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Stock Trading Journal</title>
+  <title>Stock Trading Journal — DEMO</title>
   <style>
     :root{
-      /* Update these to match your calculator theme */
+      /* Match your calculator theme here if you want */
       --bg:#0b1220;
       --card:#121a2b;
       --text:#e8eefc;
@@ -25,7 +25,7 @@
       color:var(--text);
       padding:24px;
     }
-    .wrap{max-width:720px;margin:0 auto}
+    .wrap{max-width:760px;margin:0 auto}
     .card{
       background:var(--card);
       border:1px solid var(--line);
@@ -33,8 +33,32 @@
       padding:20px;
       box-shadow: 0 10px 30px rgba(0,0,0,.25);
     }
-    h1{margin:0 0 6px;font-size:22px}
-    .sub{margin:0 0 18px;color:var(--muted);font-size:13px}
+    .top{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:14px;
+    }
+    h1{margin:0;font-size:22px;line-height:1.2}
+    .sub{margin:6px 0 0;color:var(--muted);font-size:13px}
+    .pill{
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:8px 10px;
+      font-size:12px;
+      color:var(--muted);
+      white-space:nowrap;
+    }
+    .pill.live{
+      border-color: rgba(255,77,77,.45);
+      color: rgba(255,77,77,.95);
+    }
+    .pill.demo{
+      border-color: rgba(255,138,0,.45);
+      color: rgba(255,138,0,.95);
+    }
+
     .grid{
       display:grid;
       grid-template-columns: 1fr 1fr;
@@ -75,29 +99,43 @@
     .status.ok{color:var(--ok)}
     .status.bad{color:var(--danger)}
     .hint{margin-top:10px;color:var(--muted);font-size:12px}
+    .req{color:rgba(255,138,0,.95)}
   </style>
 </head>
 <body>
   <div class="wrap">
     <div class="card">
-      <h1>Stock Trading Journal</h1>
-      <p class="sub">Each submit appends one new row to your spreadsheet.</p>
+      <div class="top">
+        <div>
+          <h1>Stock Trading Journal</h1>
+          <p class="sub">Each submit appends one new row to the selected tab (Demo or Live).</p>
+        </div>
+        <div id="modePill" class="pill demo">Mode: Demo</div>
+      </div>
 
       <form id="journalForm">
         <div class="grid">
 
           <div>
-            <label for="ticker">Ticker</label>
+            <label for="mode">Mode <span class="req">*</span></label>
+            <select id="mode" name="mode" required>
+              <option value="Demo" selected>Demo</option>
+              <option value="Live">Live</option>
+            </select>
+          </div>
+
+          <div>
+            <label for="ticker">Ticker <span class="req">*</span></label>
             <input id="ticker" name="ticker" placeholder="SPY" autocomplete="off" required />
           </div>
 
           <div>
-            <label for="entryPrice">Entry Price</label>
+            <label for="entryPrice">Entry Price <span class="req">*</span></label>
             <input id="entryPrice" name="entryPrice" placeholder="0.00" inputmode="decimal" required />
           </div>
 
           <div>
-            <label for="result">Win / Loss</label>
+            <label for="result">Win / Loss <span class="req">*</span></label>
             <select id="result" name="result" required>
               <option value="" selected disabled>Select</option>
               <option value="Win">Win</option>
@@ -107,23 +145,24 @@
           </div>
 
           <div>
-            <label for="broker">Broker</label>
+            <label for="broker">Broker <span class="req">*</span></label>
             <input id="broker" name="broker" placeholder="Webull / TOS / IBKR" autocomplete="off" required />
           </div>
 
           <div class="row">
-            <label for="plAmount">Profit / Loss Amount</label>
+            <label for="plAmount">Profit / Loss Amount <span class="req">*</span></label>
             <input id="plAmount" name="plAmount" placeholder="0.00 (use negative for loss)" inputmode="decimal" required />
           </div>
-<div class="row">
-  <label for="notes">Notes</label>
-  <input
-    id="notes"
-    name="notes"
-    placeholder="Optional trade notes"
-    autocomplete="off"
-  />
-</div>
+
+          <div class="row">
+            <label for="notes">Notes</label>
+            <input
+              id="notes"
+              name="notes"
+              placeholder="Optional trade notes"
+              autocomplete="off"
+            />
+          </div>
 
         </div>
 
@@ -134,22 +173,34 @@
         </div>
 
         <div class="hint">
-          Tip: Use negative numbers for losses (example: -25.50).
+          Tip: use negative numbers for losses (example: <span style="color:var(--muted)">-25.50</span>).
         </div>
       </form>
     </div>
   </div>
 
   <script>
-    // Paste your Apps Script Web App URL here:
-    const ENDPOINT = "https://script.google.com/macros/s/AKfycbwDrEDoEJDhNZ8vFHVzuoBzfrgjpMmIXCaoKrVQ0--UK4g2lNlffW0Y5bFA0ho6uUoYfg/exec";
+    // Your Apps Script Web App URL:
+    const ENDPOINT = "https://script.google.com/macros/s/AKfycbw7eJM1qJ9yzKrHQDge8IyHqhlInJtb0abRiEG-XL0kwIn4Q6tLFHCtmXrWzq_LkqDN1A/exec";
 
     const form = document.getElementById("journalForm");
     const statusEl = document.getElementById("status");
     const resetBtn = document.getElementById("resetBtn");
+    const modeEl = document.getElementById("mode");
+    const modePill = document.getElementById("modePill");
+
+    function setModeUI() {
+      const isLive = modeEl.value === "Live";
+      document.title = isLive ? "Stock Trading Journal — LIVE" : "Stock Trading Journal — DEMO";
+      modePill.textContent = "Mode: " + modeEl.value;
+      modePill.className = "pill " + (isLive ? "live" : "demo");
+    }
+    modeEl.addEventListener("change", setModeUI);
+    setModeUI();
 
     resetBtn.addEventListener("click", () => {
       form.reset();
+      setModeUI();
       statusEl.textContent = "";
       statusEl.className = "status";
       document.getElementById("ticker").focus();
@@ -165,20 +216,21 @@
     form.addEventListener("submit", async (e) => {
       e.preventDefault();
 
-      if (!ENDPOINT || ENDPOINT.includes("YOUR_APPS_SCRIPT_WEB_APP_URL")) {
-        statusEl.textContent = "Add your Apps Script URL in the code first.";
+      if (!ENDPOINT) {
+        statusEl.textContent = "Missing endpoint URL.";
         statusEl.className = "status bad";
         return;
       }
 
       const payload = {
-  ticker: form.ticker.value,
-  entryPrice: parseNumberLike(form.entryPrice.value),
-  result: form.result.value,
-  broker: form.broker.value,
-  plAmount: parseNumberLike(form.plAmount.value),
-  notes: form.notes.value
-};
+        mode: form.mode.value,
+        ticker: form.ticker.value,
+        entryPrice: parseNumberLike(form.entryPrice.value),
+        result: form.result.value,
+        broker: form.broker.value,
+        plAmount: parseNumberLike(form.plAmount.value),
+        notes: form.notes.value
+      };
 
       statusEl.textContent = "Submitting...";
       statusEl.className = "status";
@@ -193,9 +245,10 @@
         const json = await res.json();
 
         if (json.ok) {
-          statusEl.textContent = "Row added.";
+          statusEl.textContent = `Row added to ${json.tab || payload.mode}.`;
           statusEl.className = "status ok";
           form.reset();
+          setModeUI();
           document.getElementById("ticker").focus();
         } else {
           statusEl.textContent = "Error: " + (json.error || "Unknown error");
